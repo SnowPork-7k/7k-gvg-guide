@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEBULA GVG สูตรเตี่ย (แยกลำดับสกิล เปิดก่อน-หลัง)</title>
+    <title>NEBULA GVG สูตรเตี่ย (ระบบกดคลิก)</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #1a1a2e; color: #ffffff; padding: 20px; }
         .container { max-width: 900px; margin: auto; }
@@ -26,23 +26,25 @@
 
         .board-section { background-color: #16213e; padding: 20px; border-radius: 12px; border: 2px solid #e94560; margin-bottom: 20px; }
         .board-title { color: #e94560; margin-bottom: 15px; font-weight: bold; font-size: 18px; text-align: center; }
+        .board-hint { text-align: center; font-size: 13px; color: #74b9ff; margin-bottom: 15px; background: rgba(116, 185, 255, 0.1); padding: 8px; border-radius: 5px; }
         
         .board-grid { display: grid; grid-template-columns: 3fr 1fr; gap: 15px; }
         
-        .drop-zone { background-color: #1b2640; border: 2px dashed #4caf50; border-radius: 8px; min-height: 100px; padding: 20px 15px 15px; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 15px; position: relative; transition: 0.2s; }
-        .drop-zone.drag-over { background-color: #253354; border-color: #ffcc00; }
+        /* เปลี่ยนจาก drop-zone เป็นโซนแสดงผลธรรมดา */
+        .zone-area { background-color: #1b2640; border: 2px solid #2d4059; border-radius: 8px; min-height: 100px; padding: 20px 15px 15px; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 15px; position: relative; transition: 0.2s; }
         .zone-label { position: absolute; top: -10px; left: 10px; background: #4caf50; color: white; padding: 2px 10px; border-radius: 10px; font-size: 12px; font-weight: bold; }
         .front-label { background: #e94560; }
         .pet-label { background: #9c27b0; }
 
-        .char-card { width: 65px; text-align: center; cursor: grab; position: relative; transition: 0.2s; }
-        .char-card:active { cursor: grabbing; }
+        /* เปลี่ยนเมาส์ชี้ให้เป็นรูปมือ (คลิกได้) */
+        .char-card { width: 65px; text-align: center; cursor: pointer; position: relative; transition: 0.2s; }
+        .char-card:hover { transform: translateY(-5px); }
         .char-img { width: 55px; height: 55px; border-radius: 50%; border: 2px solid #fff; object-fit: cover; box-shadow: 0 4px 6px rgba(0,0,0,0.3); pointer-events: none; }
         .pet-img { border-radius: 20%; border-color: #e1bee7; }
         .char-name { font-size: 11px; margin-top: 5px; color: #ddd; display: block; pointer-events: none; }
         
         .remove-btn { position: absolute; top: -5px; right: 0; background: #ff3b3b; color: white; width: 20px; height: 20px; border-radius: 50%; font-size: 12px; line-height: 18px; cursor: pointer; display: none; border: 1px solid white; font-weight: bold; }
-        .drop-zone .char-card .remove-btn { display: block; } 
+        .zone-area .char-card .remove-btn { display: block; } 
 
         #resultArea { margin-top: 20px; min-height: 150px; }
         .result-card { background-color: #1b2640; padding: 20px; border-radius: 12px; border-left: 5px solid #4caf50; animation: fadeIn 0.4s; }
@@ -54,7 +56,6 @@
         .counter-pet { width: 100px; display: flex; flex-direction: column; justify-content: center; align-items: center; border: 1px dashed rgba(255,255,255,0.1); padding: 10px; border-radius: 5px; position: relative; }
         .counter-label { position: absolute; left: 10px; top: 10px; font-size: 11px; color: #a2a8d3; }
 
-        /* ตกแต่งส่วนลำดับสกิล */
         .skills-board { margin-top: 15px; background: #16213e; padding: 15px; border-radius: 8px; border: 1px solid #2d4059; }
         .skill-title { color: #ffcc00; margin-top: 0; margin-bottom: 15px; font-size: 16px; display: flex; align-items: center; border-bottom: 1px dashed #2d4059; padding-bottom: 10px; }
         
@@ -80,7 +81,7 @@
 
         <div class="roster-section">
             <div class="roster-header">
-                <h3 class="roster-title">👇 ลากฮีโร่และสัตว์เลี้ยงไปวางบนกระดาน</h3>
+                <h3 class="roster-title">👇 กดจิ้มที่ฮีโร่และสัตว์เลี้ยงเพื่อจัดทีม</h3>
                 <button class="reset-btn" onclick="resetBoard()">🔄 ล้างกระดาน</button>
             </div>
             
@@ -91,29 +92,30 @@
 
             <div class="pool-group">
                 <div class="pool-label">🛡️ กลุ่มฮีโร่</div>
-                <div id="heroPool" class="pool-container" data-type="pool" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+                <div id="heroPool" class="pool-container"></div>
             </div>
 
             <div class="pool-group">
                 <div class="pool-label">🐾 กลุ่มสัตว์เลี้ยง</div>
-                <div id="petPool" class="pool-container" data-type="pool" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+                <div id="petPool" class="pool-container"></div>
             </div>
         </div>
 
         <div class="board-section">
             <div class="board-title">จำลองการยืนตำแหน่งของศัตรู</div>
+            <div class="board-hint">💡 <b>ทริค:</b> กดที่ตัวฮีโร่บนกระดานเพื่อ <b>ย้ายสลับแถว (หน้า ↔ หลัง)</b></div>
             
             <div class="board-grid">
                 <div style="display: flex; flex-direction: column; gap: 15px;">
-                    <div id="zone-back" class="drop-zone" data-accept="hero" ondrop="drop(event)" ondragover="allowDrop(event)" ondragenter="dragEnter(event)" ondragleave="dragLeave(event)">
+                    <div id="zone-back" class="zone-area">
                         <div class="zone-label">แถวหลัง (Back)</div>
                     </div>
-                    <div id="zone-front" class="drop-zone" data-accept="hero" ondrop="drop(event)" ondragover="allowDrop(event)" ondragenter="dragEnter(event)" ondragleave="dragLeave(event)">
+                    <div id="zone-front" class="zone-area">
                         <div class="zone-label front-label">แถวหน้า (Front)</div>
                     </div>
                 </div>
                 
-                <div id="zone-pet" class="drop-zone" data-accept="pet" ondrop="drop(event)" ondragover="allowDrop(event)" ondragenter="dragEnter(event)" ondragleave="dragLeave(event)">
+                <div id="zone-pet" class="zone-area">
                     <div class="zone-label pet-label">สัตว์เลี้ยง</div>
                 </div>
             </div>
@@ -184,14 +186,13 @@
             { id: "trude", name: "ธรูด", img: "images/trude.png" },
             { id: "vanessa", name: "วาเนสซ่า", img: "images/vanessa.png" },
             { id: "velika", name: "เบลลิก้า", img: "images/velika.png" },
-            { id: "sieg", name: "ซีค", img: "images/sieg.png" },
             { id: "xiaoqiao", name: "ตุ้ม", img: "images/xiaoqiao.png" },
             { id: "yeonhee", name: "ยอนฮี", img: "images/yeonhee.png" },
             { id: "yushin", name: "ยูชิน", img: "images/yushin.png" },
             { id: "chahaein", name: "ชาเฮอิน", img: "images/chahaein.png" },
             { id: "jinu", name: "ซองจินอู", img: "images/jinu.png" },
             { id: "guanyu", name: "กวนอู", img: "images/guanyu.png" },
-            { id: "teoood", name: "แทอู๊ด", img: "images/teoood.png" },
+            { id: "teoood", name: "แทอู๊ด", img: "images/teoood.png" }
         ];
 
         const pets = [
@@ -199,15 +200,15 @@
             { id: "dello", name: "เดลโล่", img: "images/dello.png" },
             { id: "eirin", name: "อิลีน", img: "images/eirin.png" },
             { id: "karam", name: "คารัม", img: "images/karam.png" },
-            { id: "kree", name: "คารัม", img: "images/kree.png" },
+            { id: "kree", name: "ครี", img: "images/kree.png" },
             { id: "richel", name: "รีเชล", img: "images/richel.png" },
             { id: "ruu", name: "ลู", img: "images/ruu.png" },
             { id: "windy", name: "วินดี้", img: "images/windy.png" },
             { id: "yeonji", name: "ยอนจี", img: "images/yeonji.png" },
             { id: "yu", name: "ยู", img: "images/yu.png" },
-            { id: "merparrow", name: "เมลแปร์โรว์", img: "images/merparrow.png" },
-        
+            { id: "merparrow", name: "เมลแปร์โรว์", img: "images/merparrow.png" }
         ];
+
         window.onload = () => {
             const hPool = document.getElementById('heroPool');
             heroes.forEach(h => hPool.innerHTML += createCardHTML(h, 'hero'));
@@ -215,11 +216,12 @@
             pets.forEach(p => pPool.innerHTML += createCardHTML(p, 'pet'));
         };
 
+        // เปลี่ยนระบบสร้างการ์ด ให้รองรับการกดคลิกแทนการลาก
         function createCardHTML(data, type) {
             const imgClass = type === 'pet' ? 'char-img pet-img' : 'char-img';
             return `
-                <div class="char-card" draggable="true" ondragstart="dragStart(event)" id="char-${data.id}" data-name="${data.name}" data-type="${type}">
-                    <div class="remove-btn" onclick="removeChar('${data.id}', '${type}')">✕</div>
+                <div class="char-card" id="char-${data.id}" data-name="${data.name}" data-type="${type}" onclick="handleCardClick('${data.id}', '${type}')">
+                    <div class="remove-btn" onclick="removeChar(event, '${data.id}', '${type}')">✕</div>
                     <img src="${data.img}" class="${imgClass}">
                     <span class="char-name">${data.name}</span>
                 </div>
@@ -240,39 +242,47 @@
             });
         }
 
-        function dragStart(event) { event.dataTransfer.setData("text/plain", event.target.id); }
-        function allowDrop(event) { event.preventDefault(); }
-        function dragEnter(event) { if(event.currentTarget.classList.contains('drop-zone')) event.currentTarget.classList.add('drag-over'); }
-        function dragLeave(event) { if(event.currentTarget.classList.contains('drop-zone')) event.currentTarget.classList.remove('drag-over'); }
+        // ========================================================
+        // 🚀 ระบบ กดคลิก (Click) เพื่อจัดทีม
+        // ========================================================
+        function handleCardClick(id, type) {
+            let card = document.getElementById(`char-${id}`);
+            let currentZone = card.parentElement.id;
 
-        function drop(event) {
-            event.preventDefault();
-            let dropZone = event.currentTarget;
-            if(dropZone.classList.contains('drop-zone')) dropZone.classList.remove('drag-over');
-            
-            let data = event.dataTransfer.getData("text/plain");
-            let draggedElement = document.getElementById(data);
-            if (!draggedElement) return;
-
-            let charType = draggedElement.getAttribute('data-type');
-            let zoneAccept = dropZone.getAttribute('data-accept');
-
-            if (zoneAccept) {
-                if (charType !== zoneAccept) return; 
-                if (zoneAccept === 'pet' && dropZone.querySelectorAll('.char-card').length >= 1) {
-                    let oldPet = dropZone.querySelector('.char-card');
-                    document.getElementById('petPool').appendChild(oldPet);
+            if (type === 'pet') {
+                // ถ้าสัตว์เลี้ยงอยู่ในคลัง ให้ย้ายไปลงกระดาน (ถ้ามีตัวเก่าอยู่ ให้เตะตัวเก่ากลับคลัง)
+                if (currentZone === 'petPool') {
+                    let zone = document.getElementById('zone-pet');
+                    if (zone.querySelectorAll('.char-card').length >= 1) {
+                        let oldPet = zone.querySelector('.char-card');
+                        document.getElementById('petPool').appendChild(oldPet);
+                    }
+                    zone.appendChild(card);
+                }
+            } 
+            else if (type === 'hero') {
+                if (currentZone === 'heroPool') {
+                    // จิ้มครั้งแรกตอนอยู่คลัง -> ย้ายไปแถวหลัง
+                    document.getElementById('zone-back').appendChild(card);
+                } else if (currentZone === 'zone-back') {
+                    // ถ้าอยู่แถวหลัง แล้วจิ้มซ้ำ -> ย้ายไปแถวหน้า
+                    document.getElementById('zone-front').appendChild(card);
+                } else if (currentZone === 'zone-front') {
+                    // ถ้าอยู่แถวหน้า แล้วจิ้มซ้ำ -> ย้ายกลับแถวหลัง
+                    document.getElementById('zone-back').appendChild(card);
                 }
             }
-
-            dropZone.appendChild(draggedElement);
-            draggedElement.style.display = "block";
+            
+            // ยกเลิกการซ่อนจากระบบค้นหา (เผื่อคลิกตอนกำลังพิมพ์ค้นหาอยู่)
+            card.style.display = "block";
             checkMatch();
         }
 
-        function removeChar(charId, type) {
+        // เตะตัวละครกลับคลังเมื่อกดปุ่มกากบาท
+        function removeChar(event, id, type) {
+            event.stopPropagation(); // สำคัญ! ป้องกันไม่ให้ทะลุไปโดนคำสั่ง handleCardClick
             let poolId = type === 'pet' ? 'petPool' : 'heroPool';
-            let charElement = document.getElementById(`char-${charId}`);
+            let charElement = document.getElementById(`char-${id}`);
             document.getElementById(poolId).appendChild(charElement);
             filterChars(); 
             checkMatch();
@@ -329,7 +339,7 @@
                     "เน้นเร่งเทิร์นและใช้รินทะลุบัพอมตะของคริส ใช้สัตว์เลี้ยงริเชลเพื่อบูสต์ดาเมจ",
                     [{name: "แทโอ", img: getAvatar("แท", "455A64")}], // หลัง
                     [{name: "สไปค์", img: getAvatar("สป", "0288D1")}, {name: "ริน", img: getAvatar("ริน", "C2185B")}], // หน้า
-                    [{name: "ริเชล", img: getAvatar("ริ", "C2185B")}], // สัตว์เลี้ยง
+                    [{name: "ริเชล", img: "images/richel.png"}], // สัตว์เลี้ยง
                     {
                         // 🚀 กรณีสปีดเราเยอะกว่า (เราเปิดก่อน)
                         firstStrike: {
@@ -364,7 +374,7 @@
                         // 🛡️ กรณีสปีดเราน้อยกว่า (ศัตรูเปิดก่อน)
                         secondStrike: {
                             enemy: ["บนโรซี่", "ล่างพาลานอส", "บนน็อกซ์"],
-                            ours: ["ล่างคริส", "บนน็อกซ์", "บนคริส"] // ใส่สกิลเวลาเราโดนเปิดก่อนตรงนี้ (ที่คุณบอกผมมา)
+                            ours: ["ล่างคริส", "บนน็อกซ์", "บนคริส"] // ใส่สกิลเวลาเราโดนเปิดก่อนตรงนี้
                         }
                     }
                 );
@@ -376,20 +386,18 @@
         }
 
         // ========================================================
-        // ฟังก์ชันวาดกล่องผลลัพธ์ (รองรับการแยกลำดับสกิล 2 กรณี)
+        // ฟังก์ชันวาดกล่องผลลัพธ์
         // ========================================================
         function showResult(title, strategy, backTeam, frontTeam, petTeam, skillsObj = null) {
             
             let skillsHTML = "";
             
-            // ฟังก์ชันช่วยสร้างแท็ก HTML ให้สวยงาม
             const buildSkillRow = (label, icon, skillArray) => {
                 if(!skillArray || skillArray.length === 0) return "";
                 let badges = skillArray.map(s => `<span class="skill-badge">${s}</span>`).join('<span class="skill-arrow">➔</span>');
                 return `<div class="skill-row"><span class="skill-label">${icon} ${label}:</span>${badges}</div>`;
             };
 
-            // เช็คว่ามีข้อมูลสกิลส่งเข้ามาไหม
             if (skillsObj) {
                 let firstStrikeHTML = "";
                 let secondStrikeHTML = "";
