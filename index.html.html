@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEBULA GVG สูตรเตี่ย (แยกลำดับสกิล เปิดก่อน-หลัง)</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #1a1a2e; color: #ffffff; padding: 20px; }
+        .container { max-width: 900px; margin: auto; }
+        h2 { text-align: center; color: #e94560; margin-bottom: 20px; }
+        
+        .roster-section { background-color: #0f3460; padding: 20px; border-radius: 12px; margin-bottom: 25px; border: 1px solid #2d4059; }
+        .roster-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #2d4059; padding-bottom: 10px; margin-bottom: 15px; }
+        .roster-title { color: #ffcc00; margin: 0; font-size: 16px; }
+        .reset-btn { background-color: #ff3b3b; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .reset-btn:hover { background-color: #d32f2f; }
+
+        .search-container { position: relative; margin-bottom: 20px; }
+        .search-container input { width: 100%; padding: 12px 15px 12px 40px; border-radius: 20px; border: 2px solid #2d4059; background-color: #16213e; color: white; font-size: 14px; outline: none; box-sizing: border-box; transition: 0.3s; }
+        .search-container input:focus { border-color: #4caf50; box-shadow: 0 0 10px rgba(76, 175, 80, 0.3); }
+        .search-icon { position: absolute; left: 15px; top: 12px; font-size: 16px; }
+
+        .pool-group { margin-bottom: 15px; }
+        .pool-label { font-size: 14px; color: #a2a8d3; margin-bottom: 10px; }
+        .pool-container { display: flex; flex-wrap: wrap; gap: 15px; min-height: 80px; padding: 10px; background-color: #16213e; border-radius: 8px; }
+
+        .board-section { background-color: #16213e; padding: 20px; border-radius: 12px; border: 2px solid #e94560; margin-bottom: 20px; }
+        .board-title { color: #e94560; margin-bottom: 15px; font-weight: bold; font-size: 18px; text-align: center; }
+        
+        .board-grid { display: grid; grid-template-columns: 3fr 1fr; gap: 15px; }
+        
+        .drop-zone { background-color: #1b2640; border: 2px dashed #4caf50; border-radius: 8px; min-height: 100px; padding: 20px 15px 15px; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 15px; position: relative; transition: 0.2s; }
+        .drop-zone.drag-over { background-color: #253354; border-color: #ffcc00; }
+        .zone-label { position: absolute; top: -10px; left: 10px; background: #4caf50; color: white; padding: 2px 10px; border-radius: 10px; font-size: 12px; font-weight: bold; }
+        .front-label { background: #e94560; }
+        .pet-label { background: #9c27b0; }
+
+        .char-card { width: 65px; text-align: center; cursor: grab; position: relative; transition: 0.2s; }
+        .char-card:active { cursor: grabbing; }
+        .char-img { width: 55px; height: 55px; border-radius: 50%; border: 2px solid #fff; object-fit: cover; box-shadow: 0 4px 6px rgba(0,0,0,0.3); pointer-events: none; }
+        .pet-img { border-radius: 20%; border-color: #e1bee7; }
+        .char-name { font-size: 11px; margin-top: 5px; color: #ddd; display: block; pointer-events: none; }
+        
+        .remove-btn { position: absolute; top: -5px; right: 0; background: #ff3b3b; color: white; width: 20px; height: 20px; border-radius: 50%; font-size: 12px; line-height: 18px; cursor: pointer; display: none; border: 1px solid white; font-weight: bold; }
+        .drop-zone .char-card .remove-btn { display: block; } 
+
+        #resultArea { margin-top: 20px; min-height: 150px; }
+        .result-card { background-color: #1b2640; padding: 20px; border-radius: 12px; border-left: 5px solid #4caf50; animation: fadeIn 0.4s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .counter-board { display: flex; gap: 15px; margin-top: 15px; background: #0f3460; padding: 15px; border-radius: 8px; align-items: stretch; }
+        .counter-heroes { flex-grow: 1; display: flex; flex-direction: column; gap: 10px; }
+        .counter-row { display: flex; justify-content: center; gap: 15px; align-items: center; border: 1px dashed rgba(255,255,255,0.1); padding: 10px; border-radius: 5px; position: relative; min-height: 60px; }
+        .counter-pet { width: 100px; display: flex; flex-direction: column; justify-content: center; align-items: center; border: 1px dashed rgba(255,255,255,0.1); padding: 10px; border-radius: 5px; position: relative; }
+        .counter-label { position: absolute; left: 10px; top: 10px; font-size: 11px; color: #a2a8d3; }
+
+        /* ตกแต่งส่วนลำดับสกิล */
+        .skills-board { margin-top: 15px; background: #16213e; padding: 15px; border-radius: 8px; border: 1px solid #2d4059; }
+        .skill-title { color: #ffcc00; margin-top: 0; margin-bottom: 15px; font-size: 16px; display: flex; align-items: center; border-bottom: 1px dashed #2d4059; padding-bottom: 10px; }
+        
+        .scenario-container { display: flex; flex-direction: column; gap: 15px; }
+        .scenario-box { background-color: #1b2640; padding: 12px; border-radius: 6px; border-left: 4px solid #74b9ff; }
+        .scenario-box.defend { border-left-color: #ff7675; }
+        
+        .scenario-title { font-weight: bold; margin-bottom: 10px; font-size: 14px; }
+        .scenario-box.defend .scenario-title { color: #ff7675; }
+        .scenario-box:not(.defend) .scenario-title { color: #74b9ff; }
+
+        .skill-row { margin-bottom: 8px; font-size: 13px; display: flex; align-items: center; flex-wrap: wrap; }
+        .skill-row:last-child { margin-bottom: 0; }
+        .skill-label { width: 90px; color: #a2a8d3; }
+        .skill-badge { background-color: #253354; padding: 4px 10px; border-radius: 4px; border: 1px solid #2d4059; color: #fff; }
+        .skill-arrow { color: #e94560; margin: 0 8px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>⚔️ NEBULA GVG สูตรเตี่ย</h2>
+
+        <div class="roster-section">
+            <div class="roster-header">
+                <h3 class="roster-title">👇 ลากฮีโร่และสัตว์เลี้ยงไปวางบนกระดาน</h3>
+                <button class="reset-btn" onclick="resetBoard()">🔄 ล้างกระดาน</button>
+            </div>
+            
+            <div class="search-container">
+                <span class="search-icon">🔎</span>
+                <input type="text" id="charSearch" onkeyup="filterChars()" placeholder="พิมพ์ชื่อตัวละครหรือสัตว์เลี้ยงเพื่อค้นหา...">
+            </div>
+
+            <div class="pool-group">
+                <div class="pool-label">🛡️ กลุ่มฮีโร่</div>
+                <div id="heroPool" class="pool-container" data-type="pool" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+            </div>
+
+            <div class="pool-group">
+                <div class="pool-label">🐾 กลุ่มสัตว์เลี้ยง</div>
+                <div id="petPool" class="pool-container" data-type="pool" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+            </div>
+        </div>
+
+        <div class="board-section">
+            <div class="board-title">จำลองการยืนตำแหน่งของศัตรู</div>
+            
+            <div class="board-grid">
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    <div id="zone-back" class="drop-zone" data-accept="hero" ondrop="drop(event)" ondragover="allowDrop(event)" ondragenter="dragEnter(event)" ondragleave="dragLeave(event)">
+                        <div class="zone-label">แถวหลัง (Back)</div>
+                    </div>
+                    <div id="zone-front" class="drop-zone" data-accept="hero" ondrop="drop(event)" ondragover="allowDrop(event)" ondragenter="dragEnter(event)" ondragleave="dragLeave(event)">
+                        <div class="zone-label front-label">แถวหน้า (Front)</div>
+                    </div>
+                </div>
+                
+                <div id="zone-pet" class="drop-zone" data-accept="pet" ondrop="drop(event)" ondragover="allowDrop(event)" ondragenter="dragEnter(event)" ondragleave="dragLeave(event)">
+                    <div class="zone-label pet-label">สัตว์เลี้ยง</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="resultArea">
+            <div style="text-align:center; color:#a2a8d3;">จัดตำแหน่งฮีโร่และสัตว์เลี้ยงเพื่อวิเคราะห์กลยุทธ์...</div>
+        </div>
+    </div>
+
+    <script>
+        const getAvatar = (name, color) => `https://ui-avatars.com/api/?name=${name}&background=${color}&color=fff&bold=true`;
+        
+        const heroes = [
+            { id: "rudy", name: "ลูดี้", img: "images/rudy.png" },
+            { id: "kris", name: "คริส", img: "images/kris.png" },
+            { id: "rosie", name: "โรซี่", img: "images/rosie.png" },
+            { id: "pallanus", name: "พาลานอส", img: "images/pallanus.png" },
+            { id: "knox", name: "น็อกซ์", img: "images/knox.png" },
+            { id: "ace", name: "เอส", img: getAvatar("เอส", "F57C00") }
+        ];
+
+        const pets = [
+            { id: "pike", name: "พยัคฆ์", img: getAvatar("พย", "795548") },
+            { id: "richel", name: "ริเชล", img: getAvatar("ริ", "C2185B") },
+            { id: "cleo", name: "คลีโอ", img: getAvatar("คล", "009688") }
+        ];
+
+        window.onload = () => {
+            const hPool = document.getElementById('heroPool');
+            heroes.forEach(h => hPool.innerHTML += createCardHTML(h, 'hero'));
+            const pPool = document.getElementById('petPool');
+            pets.forEach(p => pPool.innerHTML += createCardHTML(p, 'pet'));
+        };
+
+        function createCardHTML(data, type) {
+            const imgClass = type === 'pet' ? 'char-img pet-img' : 'char-img';
+            return `
+                <div class="char-card" draggable="true" ondragstart="dragStart(event)" id="char-${data.id}" data-name="${data.name}" data-type="${type}">
+                    <div class="remove-btn" onclick="removeChar('${data.id}', '${type}')">✕</div>
+                    <img src="${data.img}" class="${imgClass}">
+                    <span class="char-name">${data.name}</span>
+                </div>
+            `;
+        }
+
+        function filterChars() {
+            let keyword = document.getElementById('charSearch').value.toLowerCase();
+            let poolCards = document.querySelectorAll('.pool-container .char-card');
+            
+            poolCards.forEach(card => {
+                let name = card.getAttribute('data-name').toLowerCase();
+                if (name.includes(keyword)) {
+                    card.style.display = "block";
+                } else {
+                    card.style.display = "none";
+                }
+            });
+        }
+
+        function dragStart(event) { event.dataTransfer.setData("text/plain", event.target.id); }
+        function allowDrop(event) { event.preventDefault(); }
+        function dragEnter(event) { if(event.currentTarget.classList.contains('drop-zone')) event.currentTarget.classList.add('drag-over'); }
+        function dragLeave(event) { if(event.currentTarget.classList.contains('drop-zone')) event.currentTarget.classList.remove('drag-over'); }
+
+        function drop(event) {
+            event.preventDefault();
+            let dropZone = event.currentTarget;
+            if(dropZone.classList.contains('drop-zone')) dropZone.classList.remove('drag-over');
+            
+            let data = event.dataTransfer.getData("text/plain");
+            let draggedElement = document.getElementById(data);
+            if (!draggedElement) return;
+
+            let charType = draggedElement.getAttribute('data-type');
+            let zoneAccept = dropZone.getAttribute('data-accept');
+
+            if (zoneAccept) {
+                if (charType !== zoneAccept) return; 
+                if (zoneAccept === 'pet' && dropZone.querySelectorAll('.char-card').length >= 1) {
+                    let oldPet = dropZone.querySelector('.char-card');
+                    document.getElementById('petPool').appendChild(oldPet);
+                }
+            }
+
+            dropZone.appendChild(draggedElement);
+            draggedElement.style.display = "block";
+            checkMatch();
+        }
+
+        function removeChar(charId, type) {
+            let poolId = type === 'pet' ? 'petPool' : 'heroPool';
+            let charElement = document.getElementById(`char-${charId}`);
+            document.getElementById(poolId).appendChild(charElement);
+            filterChars(); 
+            checkMatch();
+        }
+
+        function resetBoard() {
+            document.querySelectorAll('#zone-front .char-card, #zone-back .char-card').forEach(el => {
+                document.getElementById('heroPool').appendChild(el);
+            });
+            document.querySelectorAll('#zone-pet .char-card').forEach(el => {
+                document.getElementById('petPool').appendChild(el);
+            });
+            
+            document.getElementById('charSearch').value = ''; 
+            filterChars(); 
+            document.getElementById('resultArea').innerHTML = '<div style="text-align:center; color:#a2a8d3;">จัดตำแหน่งฮีโร่และสัตว์เลี้ยงเพื่อวิเคราะห์กลยุทธ์...</div>';
+        }
+
+        function renderCounterHTML(chars, isPet = false) {
+            if(!chars || chars.length === 0) return '';
+            const imgClass = isPet ? 'char-img pet-img' : 'char-img';
+            return chars.map(c => `
+                <div class="char-card" style="cursor:default;">
+                    <img src="${c.img}" class="${imgClass}">
+                    <span class="char-name">${c.name}</span>
+                </div>
+            `).join('');
+        }
+
+        // ========================================================
+        // 🔥 สมองของเว็บ (Database เงื่อนไข) อยู่ตรงนี้ครับ 🔥
+        // ========================================================
+        function checkMatch() {
+            let frontNames = Array.from(document.getElementById('zone-front').querySelectorAll('.char-card')).map(el => el.getAttribute('data-name'));
+            let backNames = Array.from(document.getElementById('zone-back').querySelectorAll('.char-card')).map(el => el.getAttribute('data-name'));
+            
+            let allEnemies = frontNames.concat(backNames);
+            let resultArea = document.getElementById('resultArea');
+
+            if (allEnemies.length === 0) {
+                resultArea.innerHTML = '<div style="text-align:center; color:#a2a8d3;">จัดตำแหน่งฮีโร่และสัตว์เลี้ยงเพื่อวิเคราะห์กลยุทธ์...</div>';
+                return;
+            }
+
+            resultArea.innerHTML = ""; 
+            let foundMatch = false;
+
+            // ----------------------------------------------------
+            // 📌 เงื่อนไขที่ 1: ลูดี้หน้า, คริสหลัง
+            if (frontNames.includes("ลูดี้") && backNames.includes("คริส")) {
+                foundMatch = true;
+                showResult(
+                    "✅ แนะนำ: ทีมสปีด (แก้ทางอมตะ)", 
+                    "เน้นเร่งเทิร์นและใช้รินทะลุบัพอมตะของคริส ใช้สัตว์เลี้ยงริเชลเพื่อบูสต์ดาเมจ",
+                    [{name: "แทโอ", img: getAvatar("แท", "455A64")}], // หลัง
+                    [{name: "สไปค์", img: getAvatar("สป", "0288D1")}, {name: "ริน", img: getAvatar("ริน", "C2185B")}], // หน้า
+                    [{name: "ริเชล", img: getAvatar("ริ", "C2185B")}], // สัตว์เลี้ยง
+                    {
+                        // 🚀 กรณีสปีดเราเยอะกว่า (เราเปิดก่อน)
+                        firstStrike: {
+                            enemy: ["บนลูดี้", "ล่างคริส", "บนคริส"],
+                            ours: ["ล่างริน", "บนแทโอ", "ล่างสไปค์"]
+                        },
+                        // 🛡️ กรณีสปีดเราน้อยกว่า (ศัตรูเปิดก่อน)
+                        secondStrike: {
+                            enemy: ["ล่างคริส", "บนลูดี้", "บนคริส"],
+                            ours: ["บนแทโอ", "ล่างริน", "ล่างสไปค์"]
+                        }
+                    }
+                );
+            }
+            
+            // ----------------------------------------------------
+            // 📌 เงื่อนไขที่ 2: ทีม พาลานอส, น็อกซ์, โรซี่
+            else if (allEnemies.includes("พาลานอส") && allEnemies.includes("น็อกซ์") && allEnemies.includes("โรซี่")) {
+                foundMatch = true;
+                showResult(
+                    "✅ แนะนำ: ทีม คริส, โรซี่, น็อกซ์", 
+                    "จัดเรียงสกิลตามสถานการณ์สปีดของทีมตัวเองและเป้าหมาย", 
+                    [{name: "คริส", img: "images/kris.png"}], // หลัง
+                    [{name: "โรซี่", img: "images/rosie.png"}, {name: "น็อกซ์", img: "images/knox.png"}], // หน้า
+                    [{name: "โรซี่", img: "images/rosie.png"},{name: "โรซี่", img: "images/rosie.png"}], // สัตว์เลี้ยง
+                    {
+                        // 🚀 กรณีสปีดเราเยอะกว่า (เราเปิดก่อน)
+                        firstStrike: {
+                            enemy: ["บนโรซี่", "ล่างพาลานอส", "บนน็อกซ์"],
+                            ours: ["ล่างพาลานอส", "บนน็อกซ์", "บนคริส"] // ใส่สกิลเวลาเราได้เปิดก่อนตรงนี้
+                        },
+                        // 🛡️ กรณีสปีดเราน้อยกว่า (ศัตรูเปิดก่อน)
+                        secondStrike: {
+                            enemy: ["บนโรซี่", "ล่างพาลานอส", "บนน็อกซ์"],
+                            ours: ["ล่างคริส", "บนน็อกซ์", "บนคริส"] // ใส่สกิลเวลาเราโดนเปิดก่อนตรงนี้ (ที่คุณบอกผมมา)
+                        }
+                    }
+                );
+            }
+
+            if (!foundMatch) {
+                resultArea.innerHTML = `<div style="text-align:center; color:#ff7675; padding: 20px;">❌ ตำแหน่งการยืนนี้ยังไม่มีข้อมูลแนะนำกลยุทธ์ในระบบ</div>`;
+            }
+        }
+
+        // ========================================================
+        // ฟังก์ชันวาดกล่องผลลัพธ์ (รองรับการแยกลำดับสกิล 2 กรณี)
+        // ========================================================
+        function showResult(title, strategy, backTeam, frontTeam, petTeam, skillsObj = null) {
+            
+            let skillsHTML = "";
+            
+            // ฟังก์ชันช่วยสร้างแท็ก HTML ให้สวยงาม
+            const buildSkillRow = (label, icon, skillArray) => {
+                if(!skillArray || skillArray.length === 0) return "";
+                let badges = skillArray.map(s => `<span class="skill-badge">${s}</span>`).join('<span class="skill-arrow">➔</span>');
+                return `<div class="skill-row"><span class="skill-label">${icon} ${label}:</span>${badges}</div>`;
+            };
+
+            // เช็คว่ามีข้อมูลสกิลส่งเข้ามาไหม
+            if (skillsObj) {
+                let firstStrikeHTML = "";
+                let secondStrikeHTML = "";
+
+                if (skillsObj.firstStrike) {
+                    firstStrikeHTML = `
+                        <div class="scenario-box">
+                            <div class="scenario-title">🚀 กรณีเราได้เปิดก่อน (สปีดมากกว่า)</div>
+                            ${buildSkillRow("สกิลศัตรู", "🔴", skillsObj.firstStrike.enemy)}
+                            ${buildSkillRow("สกิลเรา", "🔵", skillsObj.firstStrike.ours)}
+                        </div>
+                    `;
+                }
+
+                if (skillsObj.secondStrike) {
+                    secondStrikeHTML = `
+                        <div class="scenario-box defend">
+                            <div class="scenario-title">🛡️ กรณีศัตรูได้เปิดก่อน (โดนเปิดก่อน)</div>
+                            ${buildSkillRow("สกิลศัตรู", "🔴", skillsObj.secondStrike.enemy)}
+                            ${buildSkillRow("สกิลเรา", "🔵", skillsObj.secondStrike.ours)}
+                        </div>
+                    `;
+                }
+
+                skillsHTML = `
+                    <div class="skills-board">
+                        <h4 class="skill-title">🎯 ลำดับการใช้สกิล 3 เทิร์นแรก</h4>
+                        <div class="scenario-container">
+                            ${firstStrikeHTML}
+                            ${secondStrikeHTML}
+                        </div>
+                    </div>
+                `;
+            }
+
+            document.getElementById('resultArea').innerHTML = `
+                <div class="result-card">
+                    <h3 style="color:#4caf50; margin-top:0; border-bottom:1px solid #2d4059; padding-bottom:10px;">${title}</h3>
+                    <p style="color:#ddd; line-height:1.6; margin-bottom:15px;">💡 <strong>Note:</strong> ${strategy}</p>
+                    
+                    <div class="counter-board">
+                        <div class="counter-heroes">
+                            <div class="counter-row">
+                                <span class="counter-label">แถวหลัง</span>
+                                ${renderCounterHTML(backTeam)}
+                            </div>
+                            <div class="counter-row">
+                                <span class="counter-label">แถวหน้า</span>
+                                ${renderCounterHTML(frontTeam)}
+                            </div>
+                        </div>
+                        <div class="counter-pet">
+                            <span class="counter-label" style="top:5px; left:auto; position:relative; margin-bottom:10px;">สัตว์เลี้ยง</span>
+                            ${renderCounterHTML(petTeam, true)}
+                        </div>
+                    </div>
+                    
+                    ${skillsHTML}
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
